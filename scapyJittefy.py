@@ -1,14 +1,13 @@
 from pprint import pprint
 
-def add_jitter():
-   pkts = rdpcap("/home/ross/Documents/redstone/PcapJitterfy/sample.pcap")
+def add_jitter(src, dst='out_scapy.pcap', jitter=0.001):
+   pkts = rdpcap(src)
    cooked=[]
    count=0
    base=0
    prev=0
    diff=0
    newtime=0
-   jitter=0.005
    for p in pkts:
       if count < 5:
          pprint(p)
@@ -28,4 +27,4 @@ def add_jitter():
       prev = t
       cooked.append(pmod)
       count = count + 1
-   wrpcap("out_scapy.pcap", cooked)
+   wrpcap(dst, cooked)
