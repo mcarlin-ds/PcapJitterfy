@@ -14,10 +14,10 @@ def add_jitter(src, dst='out_scapy.pcap', jitter=0.001):
          pprint(p.time)
          pprint(type(p.time))
       t=p.time
-      if count < 2:
+      if count < 1:
          newtime = t
       else:
-         newtime = prev + jitter + diff
+         newtime = t + jitter*count
       p.time = newtime
       #if count < 20:
          #print("{} ==> {}".format(time,newtime))
