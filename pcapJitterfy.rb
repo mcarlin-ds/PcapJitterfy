@@ -6,15 +6,15 @@ mult = 1
 jitter = 0.15
 
 filename = ARGV[0] || nil
-outfilename = ARGV[1] || nil
-jitter = ARGV[2] || 0.15
+outfilename = ARGV[1] || 'out.pcap'
+jitter = ARGV[2].to_f || 0.15
 
 if filename.nil? || outfilename.nil?
     p "Usage: #{__FILE__} [tracefile] [destination] [jitter=0.15]"
     exit
 end
 
-p "filename = #{filename}"
+p "args: #{filename} => #{outfilename}, jitter: #{jitter}"
 
 count = 0
 #incap = PacketFu::Read.f2a(:file => filename)
