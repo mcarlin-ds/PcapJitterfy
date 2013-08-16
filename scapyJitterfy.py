@@ -9,18 +9,12 @@ def add_jitter(src, dst='out_scapy.pcap', jitter=0.001):
    diff=0
    newtime=0
    for p in pkts:
-      if count < 5:
-         pprint(p)
-         pprint(p.time)
-         pprint(type(p.time))
       t=p.time
       if count < 1:
          newtime = t
       else:
          newtime = t + jitter*count
       p.time = newtime
-      #if count < 20:
-         #print("{} ==> {}".format(time,newtime))
       pmod = p
       if count > 0:
          diff = newtime - prev
@@ -28,3 +22,4 @@ def add_jitter(src, dst='out_scapy.pcap', jitter=0.001):
       cooked.append(pmod)
       count = count + 1
    wrpcap(dst, cooked)
+   print("Wrote to {} with jitter of {}s".format(dst, jitter))
