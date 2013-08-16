@@ -2,15 +2,15 @@
 
 require 'packetfu'
 
-mult = 1
-jitter = 0.15
-
 filename = ARGV[0] || nil
 outfilename = ARGV[1] || 'out.pcap'
-jitter = ARGV[2].to_f || 0.15
+jitter = ARGV[2].to_f || 0.005
 
-if filename.nil? || outfilename.nil?
-    p "Usage: #{__FILE__} [tracefile] [destination] [jitter=0.15]"
+if filename.nil? || outfilename.nil? || jitter.nil?
+    p "Usage: #{__FILE__} [src] [dest] [jitter=0.05]"
+    p "       src: the pcap file to modify"
+    p "       dest: the filename to put the modified pcap file"
+    p "       jitter: the desired average jitter (per packet) in seconds"
     exit
 end
 
@@ -26,59 +26,41 @@ count = 0
 p "read file of size: #{incap.length}"
 p "read file of size: #{incap.body.length}"
 
-baseSec = incap.body.first.timestamp.sec.value
-baseUsec = incap.body.first.timestamp.usec.value
-baseTimeStr = "#{baseSec}.#{baseUsec}"
-p "Base = #{baseTimeStr}"
-baseTime = baseTimeStr.to_f
-p "New Base = #{baseTime}"
-
-prevTime = baseTime
+prevDiff = 0
+prevTime = 0
+count = 0
+baseTime = 0
 
 incap.body.each do |p|
-    sec = p.timestamp.sec.value
-    usec = p.timestamp.usec.value
-    timeStr = "#{sec}.#{usec}"
+    timeStr = "#{p.timestamp.sec.value}.#{p.timestamp.usec.value}"
     time = timeStr.to_f
-    diff = time - prevTime
-    prevTime = time
+    if count == 0
+        baseTime = time
+    end
+    if count < 2
+        newTime = time
+    else
+        newTime = prevTime + jitter + prevDiff
+    end
 
-    someJitter = mult * jitter * diff
-    newTime = time + someJitter
-    
     newPsec = newTime.to_s.split('.')[0]
     newPusec = newTime.to_s.split('.')[1]
 
     p.timestamp.sec.value = newPsec.to_i
     p.timestamp.usec.value = newPusec.to_i
 
-    if true || newTime < 0 || count < 20
-        p "(#{count})  #{time} ==> #{newTime} /// #{p.timestamp.sec.value}.#{p.timestamp.usec.value};  \tEffective Time: #{time - baseTime} ==> #{newTime - baseTime};  Diff = #{diff};  Jitter = #{(newTime-time)/diff}"
-#        p " \=====>   #{p.inspect}"
+    if count < 20
+        p "(#{count})  #{time} ==> #{newTime} /// #{p.timestamp.sec.value}.#{p.timestamp.usec.value};    Effective Time: #{time - baseTime rescue 'err'} ==> #{newTime - baseTime rescue 'err'};  PrevDiff = #{prevDiff}"
+    elsif count < 25
+        p p.inspect
     end
 
-
+    prevDiff = newTime - prevTime rescue 0
+    prevTime = time
     count += 1
-    mult *= -1  # flip the sign for jitter
 end
 
 puts "#{count} packets"
 p "#{incap.length}, #{incap.body.length}"
 
 File.open(outfilename,'wb') {|file| file.write(incap.to_s)}
-
-#res = incap.write()
-
-#bla = PacketFu::PcapFile.new
-#bla.body = outcap
-#
-#p "."
-#p "."
-#p "NEW PCAP >>>>>>>>>>>>>>>>>>> #{bla.inspect}"
-#p "."
-#p "."
-#res = bla.write()
-
-#puts "result: #{res}"
-
-#outcap.write()
